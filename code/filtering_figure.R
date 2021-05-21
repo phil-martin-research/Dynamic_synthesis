@@ -1,5 +1,10 @@
 #script to draw decision-tree style diagram
 
+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
+
+
+credentials::set_github_pat("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")
+
 
 .libPaths("C:/R/Library")
 .Library<-("C:/R/Library")
@@ -11,8 +16,6 @@ rm(list = ls())
 library(tidyverse)
 library(cowplot)
 library(metafor)
-library(ggparty)
-library(party)
 library(data.table)
 library(grid)
 library(gridExtra)
@@ -40,11 +43,9 @@ inv_sub<-subset(inv_data,population=="Invasive plants")
 plant_sub<-subset(inv_data,hlo=="Plant abundance"|hlo=="Plant condition"|hlo=="Plant diversity"|hlo=="Plant fecundity")
 animal_sub<-subset(inv_data,hlo=="Animal abundance"|hlo=="Animal condition"|hlo=="Animal diversity")
 carbon_sub<-subset(inv_data,hlo=="SOil organic carbon"|hlo=="Soil organic matter"|hlo=="Soil microbial biomass")
-
-
 soil_sub<-subset(inv_data,population=="Soil")
 
-
+#run different meta-analysese for each of these subsets
 inv_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
        control=list(maxiter=1000),data=inv_sub)
 plant_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
@@ -54,30 +55,31 @@ animal_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
 carbon_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                    control=list(maxiter=1000),data=carbon_sub)
 
+#put outputs into a dataframe along with details on numbers of studies and comparisons
 outcome_results<-data.frame(split=rep("Different\noutcomes",4),
                             outcome=c("Invasive plants \n (n=165, k=4298)","Native plants \n(n=34, k=863)",
                                       "Native animals\n (n=14, k=219)","Carbon \n (n=11, k=90)"),
            estimate=c(inv_out_m1$beta,plant_out_m1$beta,animal_out_m1$beta,carbon_out_m1$beta),
            se=c(inv_out_m1$se,plant_out_m1$se,animal_out_m1$se,carbon_out_m1$se))
-
-
+#convert effect sizes to percentages
 outcome_results$perc<-(exp(outcome_results$estimate)-1)*100
 outcome_results$lci<-(exp(outcome_results$estimate-(1.96*outcome_results$se))-1)*100
 outcome_results$uci<-(exp(outcome_results$estimate+(1.96*outcome_results$se))-1)*100
 
+#plot result
 outcome_plot<-outcome_results%>%mutate(outcome=fct_relevel(outcome,"Carbon \n (n=11, k=90)",
-               "Native animals\n (n=14, k=219)","Native plants \n(n=34, k=863)","Invasive plants \n (n=165, k=4298)"))%>%
-ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
-  geom_point(size=5)+geom_errorbar()+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
-   theme(axis.line=element_blank(),
-          axis.title.x=element_blank(),axis.ticks = element_blank(),
-          axis.title.y=element_blank(),legend.position="none",
-          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-          panel.grid.minor=element_blank(),plot.background=element_blank())+
-  theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
-        plot.background = element_rect(colour = "black",size = 1))+
-  facet_wrap(~split)+scale_colour_manual(values=c("grey20","grey20","grey20","#f8fac8"))+
-  theme(plot.background = element_rect(fill = "grey80"))
+              "Native animals\n (n=14, k=219)","Native plants \n(n=34, k=863)","Invasive plants \n (n=165, k=4298)"))%>%
+              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
+              geom_point(size=5)+geom_errorbar()+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+              theme(axis.line=element_blank(),
+              axis.title.x=element_blank(),axis.ticks = element_blank(),
+              axis.title.y=element_blank(),legend.position="none",
+              panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),plot.background=element_blank())+
+              theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
+              plot.background = element_rect(colour = "black",size = 1))+
+              facet_wrap(~split)+scale_colour_manual(values=c("grey20","grey20","grey20","#f8fac8"))+
+              theme(plot.background = element_rect(fill = "grey80"))
 
 
 #second split - species
