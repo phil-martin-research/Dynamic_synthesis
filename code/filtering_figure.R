@@ -1,9 +1,7 @@
 #script to draw decision-tree style diagram
 
-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
 
 
-credentials::set_github_pat("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")
 
 
 .libPaths("C:/R/Library")
