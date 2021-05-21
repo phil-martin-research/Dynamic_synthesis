@@ -159,9 +159,9 @@ int_results<-data.frame(split=rep("Different\ninterventions",4),
                          "Chemical control\n (n=17, k=259)","Biological control\n (n=7, k=33)"),
                           estimate=c(phys_m1$beta,hab_m1$beta,chem_m1$beta,biol_m1$beta),
                           se=c(phys_m1$se,hab_m1$se,chem_m1$se,biol_m1$se))
-int_results$perc<-(exp(phys_results$estimate)-1)*100
-int_results$lci<-(exp(phys_results$estimate-(1.96*phys_results$se))-1)*100
-int_results$uci<-(exp(phys_results$estimate+(1.96*phys_results$se))-1)*100
+int_results$perc<-(exp(int_results$estimate)-1)*100
+int_results$lci<-(exp(int_results$estimate-(1.96*int_results$se))-1)*100
+int_results$uci<-(exp(int_results$estimate+(1.96*int_results$se))-1)*100
 
 int_plot<-int_results%>%mutate(outcome=fct_relevel(outcome))%>%
   ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
@@ -232,7 +232,7 @@ comb_plot2<-plot_grid(outcome_plot,species_plot,herb_plot,int_plot,align = "hv",
 
 ggsave("figures/filter_plot_new2.png",comb_plot2,width = 30,height = 20,units = "cm",dpi = 320)
 
-
+### dummy_data does not exist here yet...
 arrow_plot<-ggplot(dummy_data)+
   geom_segment(aes(
   x=0,y=1,
