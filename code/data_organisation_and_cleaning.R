@@ -103,7 +103,7 @@ for (i in 1:length(cat_vars)){
 #rename interventions so that they are shorter
 inv_data_sub$new_int<-mapvalues(inv_data_sub$intervention, from = sort(unique(inv_data_sub$intervention)), 
                            to = c("Biological control","Burning","Burning","Burning","Burning","Covering",
-                                  "CUtting and covering","Cutting and flooding","Cutting and replanting",
+                                  "Cutting and covering","Cutting and flooding","Cutting and replanting",
                                   "Cutting and herbicide","Cutting","Decontamination","Digging and replanting",
                                   "Digging and herbicide","Draining","Excluding grazers","Soil amendment","Flooding",
                                   "Grazing","Grazing","Invasive management","Mowing","Plowing","Habitat restoration",
