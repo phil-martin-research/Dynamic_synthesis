@@ -1,9 +1,5 @@
 #script to draw decision-tree style diagram
 
-
-
-
-
 .libPaths("C:/R/Library")
 .Library<-("C:/R/Library")
 
@@ -18,16 +14,14 @@ library(data.table)
 library(grid)
 library(gridExtra)
 
+
 #learning how to use ggparty and party packages
-
-
 inv_data<-read.csv("data/cleaned_data.csv")
 
 #work out first split
 #first split - outcomes
 inv_data%>%dplyr::group_by(population)%>%dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
 #only include outcomes relating to invasive species abundance, condition, etc
-
 inv_data$population<-ifelse(inv_data$population=="Pathogens, pests, weeds, and invasive species","Invasive plants",inv_data$population)
 
 inv_data%>%dplyr::group_by(population)%>%
@@ -55,8 +49,10 @@ carbon_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
 
 #put outputs into a dataframe along with details on numbers of studies and comparisons
 outcome_results<-data.frame(split=rep("Different\noutcomes",4),
-                            outcome=c("Invasive plants \n (n=165, k=4298)","Native plants \n(n=34, k=863)",
-                                      "Native animals\n (n=14, k=219)","Carbon \n (n=11, k=90)"),
+                            outcome=c("Invasive plants","Native plants",
+                                      "Native animals","Carbon"),
+                            n=c(165,34,14,11),
+                            k=c(4298,863,219,90),
            estimate=c(inv_out_m1$beta,plant_out_m1$beta,animal_out_m1$beta,carbon_out_m1$beta),
            se=c(inv_out_m1$se,plant_out_m1$se,animal_out_m1$se,carbon_out_m1$se))
 #convert effect sizes to percentages
@@ -65,19 +61,19 @@ outcome_results$lci<-(exp(outcome_results$estimate-(1.96*outcome_results$se))-1)
 outcome_results$uci<-(exp(outcome_results$estimate+(1.96*outcome_results$se))-1)*100
 
 #plot result
-outcome_plot<-outcome_results%>%mutate(outcome=fct_relevel(outcome,"Carbon \n (n=11, k=90)",
-              "Native animals\n (n=14, k=219)","Native plants \n(n=34, k=863)","Invasive plants \n (n=165, k=4298)"))%>%
-              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
-              geom_point(size=5)+geom_errorbar()+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+outcome_plot<-outcome_results%>%mutate(outcome=fct_relevel(outcome,"Carbon",
+              "Native animals","Native plants","Invasive plants"))%>%
+              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
+              geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
               theme(axis.line=element_blank(),
               axis.title.x=element_blank(),axis.ticks = element_blank(),
-              axis.title.y=element_blank(),legend.position="none",
+              axis.title.y=element_blank(),
               panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
               panel.grid.minor=element_blank(),plot.background=element_blank())+
               theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
               plot.background = element_rect(colour = "black",size = 1))+
-              facet_wrap(~split)+scale_colour_manual(values=c("grey20","grey20","grey20","#f8fac8"))+
-              theme(plot.background = element_rect(fill = "grey80"))
+              facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
+              scale_size(range = c(1,6),limits = c(0,165))
 
 
 #second split - species
@@ -106,8 +102,10 @@ summary(spar_m1)
 summary(non_spar_m1)
 
 species_results<-data.frame(split=rep("Different\ninvasives",4),
-                            outcome=c("Spartina \n (n=89, k=2386)","Japanese knotweed \n(n=30, k=484)",
-                                      "Parrot's feather\n(n=17, k=508)","Giant hogweed\n(n=9, k=199)"),
+                            outcome=c("Spartina","Japanese knotweed",
+                                      "Parrot's feather","Giant hogweed"),
+                            k=c(2386,484,508,199),
+                            n=c(89,30,17,9),
                             estimate=c(spar_m1$beta,jk_m1$beta,gh_m1$beta,pf_m1$beta),
                             se=c(spar_m1$se,jk_m1$se,gh_m1$se,pf_m1$se))
 species_results$perc<-(exp(species_results$estimate)-1)*100
@@ -115,20 +113,20 @@ species_results$lci<-(exp(species_results$estimate-(1.96*species_results$se))-1)
 species_results$uci<-(exp(species_results$estimate+(1.96*species_results$se))-1)*100
 
 species_plot<-species_results%>%mutate(outcome=fct_relevel(outcome,
-              rev(c("Spartina \n (n=89, k=2386)","Japanese knotweed \n(n=30, k=484)",
-              "Parrot's feather\n(n=17, k=508)","Giant hogweed\n(n=9, k=199)"))))%>%
-              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
-              geom_point(size=5)+geom_errorbar()+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+              rev(c("Spartina","Japanese knotweed",
+              "Parrot's feather","Giant hogweed"))))%>%
+              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
+              geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
               theme(axis.line=element_blank(), axis.title.x=element_blank(),axis.ticks = element_blank(),
               axis.title.y=element_blank(),legend.position="none",
               panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
               panel.grid.minor=element_blank(),plot.background=element_blank())+
               theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
               plot.background = element_rect(colour = "black",size = 1))+
-              facet_wrap(~split)+scale_colour_manual(values=c("grey20","grey20","grey20","#dbc8fa"))+
-              theme(plot.background = element_rect(fill = "#f8fac8"))
+              facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
+              scale_size(range = c(1,6),limits = c(0,165))
 
-plot_grid(outcome_plot,species_plot,align = "v")
+plot_grid(outcome_plot,species_plot,align = "v",ncol=1)
 
 #third split
 spar_sub%>%dplyr::group_by(hli)%>%dplyr::summarise(n_studies=length(unique(citation)))%>%print(n=Inf)
@@ -148,15 +146,13 @@ chem_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                control=list(maxiter=1000),data=chem_sub)
 biol_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                control=list(maxiter=1000),data=biol_sub)
-summary(phys_m1)
-summary(hab_m1)
-summary(chem_m1)
-summary(biol_m1)
 
 
 int_results<-data.frame(split=rep("Different\ninterventions",4),
-                          outcome=c("Physical interventions \n (n=46, k=1353)","Habitat management \n(n=30, 578)",
-                         "Chemical control\n (n=17, k=259)","Biological control\n (n=7, k=33)"),
+                          outcome=c("Physical interventions","Habitat management",
+                         "Chemical control","Biological control"),
+                          k=c(1353,578,259,33),
+                          n=c(46,30,17,7),
                           estimate=c(phys_m1$beta,hab_m1$beta,chem_m1$beta,biol_m1$beta),
                           se=c(phys_m1$se,hab_m1$se,chem_m1$se,biol_m1$se))
 int_results$perc<-(exp(int_results$estimate)-1)*100
@@ -164,20 +160,20 @@ int_results$lci<-(exp(int_results$estimate-(1.96*int_results$se))-1)*100
 int_results$uci<-(exp(int_results$estimate+(1.96*int_results$se))-1)*100
 
 int_plot<-int_results%>%mutate(outcome=fct_relevel(outcome))%>%
-  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
-  geom_point(size=5)+geom_errorbar()+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,size=n,colour=k))+
+  geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
   theme(axis.line=element_blank(),
         axis.title.x=element_blank(),axis.ticks = element_blank(),
-        axis.title.y=element_blank(),legend.position="none",
+        axis.title.y=element_blank(),
         panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),plot.background=element_blank())+
         theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
         plot.background = element_rect(colour = "black",size = 1))+
-        facet_wrap(~split)+scale_colour_manual(values=c("grey20","grey20","grey20","#c8facb"))+
-        theme(plot.background = element_rect(fill = "#dbc8fa"))
+        facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
+        scale_size(range = c(1,6),limits = c(0,165))
 
 
-plot_grid(outcome_plot,species_plot,int_plot,align = "v",nrow = 2)
+plot_grid(outcome_plot,species_plot,int_plot,align = "v",ncol=1)
 
 
 #fourth split - different types of herbicide
@@ -195,7 +191,7 @@ for (i in 1:length(un_herb)){
   temp_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                   control=list(maxiter=1000),data=sub_temp)
   temp_res<-data.frame(split=("Different\nherbicides"),
-            outcome=paste(un_herb[i],"\n(n=",temp_n,", k=",temp_m1$k,")",sep = ""),
+            outcome=un_herb[i],
             estimate=c(temp_m1$beta),
             se=c(temp_m1$se),
             k=temp_m1$k,n=temp_n)
@@ -209,18 +205,50 @@ for (i in 1:length(un_herb)){
 
 
 herb_plot<-herb_results%>%slice_max(k,n=4)%>%
-  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=outcome))+
-  geom_point(size=5)+geom_errorbar()+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
+  geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
   theme(axis.line=element_blank(),
         axis.title.x=element_blank(),axis.ticks = element_blank(),
-        axis.title.y=element_blank(),legend.position="none",
+        axis.title.y=element_blank(),
         panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),plot.background=element_blank())+
   theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
         plot.background = element_rect(colour = "black",size = 1))+
   scale_y_discrete(limits=rev)+
-  facet_wrap(~split)+scale_colour_manual(values=c("grey20","grey20","grey20","grey20"))+
-  theme(plot.background = element_rect(fill = "#c8facb"))
+  facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
+  scale_size(range = c(1,6),limits = c(0,165))
+
+
+
+comb_plot<-plot_grid(outcome_plot+ theme(legend.position="none"),
+                     species_plot+ theme(legend.position="none"),
+                     int_plot+ theme(legend.position="none"),
+                     herb_plot+ theme(legend.position="none"),
+                     align = "v",ncol = 1)
+
+colour_legend <- get_legend(
+  herb_plot + 
+    theme(legend.position = "bottom")+guides(colour=guide_colorbar(title = "no. of comparisons",
+    title.position="top",title.hjust = 0.5,barwidth = 15,))+
+    guides(size=FALSE)+
+    theme(legend.box.margin = margin(0, 0, 0, 60))
+)
+
+size_legend <- get_legend(
+  herb_plot + 
+    guides(color = FALSE) +
+    theme(legend.position = "bottom")+
+    guides(size=guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5))+
+    theme(legend.box.margin = margin(0, 0, 0, 60))
+)
+
+
+
+comb_plot2<-plot_grid(comb_plot, colour_legend,size_legend, ncol=1,rel_heights=c(4, 0.3,0.3))
+
+ggsave("figures/filter_plot.png",comb_plot2,width = 12,height = 30,units = "cm",dpi = 320)
+
+
 
 
 #combine all plots
@@ -231,6 +259,9 @@ ggsave("figures/filter_plot_new1.png",comb_plot,width = 60,height = 10,units = "
 comb_plot2<-plot_grid(outcome_plot,species_plot,herb_plot,int_plot,align = "hv",nrow = 2)
 
 ggsave("figures/filter_plot_new2.png",comb_plot2,width = 30,height = 20,units = "cm",dpi = 320)
+
+comb_plot3<-plot_grid(outcome_plot,species_plot,herb_plot,int_plot,align = "hv",ncol = 1)
+ggsave("figures/filter_plot_new3.png",comb_plot2,width = 30,height = 20,units = "cm",dpi = 320)
 
 ### dummy_data does not exist here yet...
 arrow_plot<-ggplot(dummy_data)+
