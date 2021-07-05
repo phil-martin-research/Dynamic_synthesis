@@ -177,8 +177,8 @@ comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
                                         "Chemical control","Biological control"))),
         split=fct_relevel(split,c("Different\noutcomes","Different\ninvasives",
                           "Different\ninterventions","Different\nherbicides")))%>%
-  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
-  geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=n,size=n))+
+  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
   theme(axis.line=element_blank(),
         axis.ticks = element_blank(),
         axis.title.y=element_blank(),
@@ -186,36 +186,19 @@ comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank())+
   theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
-        plot.background = element_rect(colour = "black",size = 1),
-        strip.background = element_rect(colour = "black",size = 1))+
+        strip.background = element_rect(colour = "black",size = 1),
+        panel.border = element_rect(colour = "black",size = 1))+
   scale_y_discrete(limits=rev)+
-  facet_wrap(~split,scales = "free",ncol=1)+
+  facet_wrap(~split,scales = "free_y",ncol=1)+
   xlab("Percentage change in outcome")+
-  scale_colour_gradient(low = "grey",high="dark blue",limits=c(0,4298))+
-  scale_size(range = c(1,6),limits = c(0,165))
+  scale_x_continuous(breaks = c(-75,-50,-25,0,25))+
+  scale_size_continuous(range=c(2, 7), breaks=seq(10, 160, by=50),limits=c(1,165),trans="sqrt")+
+  scale_colour_continuous(low="grey90",high="blue3",breaks=seq(10, 160, by=50),limits=c(1,165),trans="sqrt")+
+  guides(color= guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5), 
+         size=guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5))+
+  theme(legend.position = "bottom")
 
 
-colour_legend <- get_legend(
-  comb_plot + 
-    theme(legend.position = "bottom")+guides(colour=guide_colorbar(title = "no. of comparisons",
-    title.position="top",title.hjust = 0.5,barwidth = 15,))+
-    guides(size=FALSE)+
-    theme(legend.box.margin = margin(0, 0, 0, 110))
-)
-
-size_legend <- get_legend(
-  comb_plot + 
-    guides(color = FALSE) +
-    theme(legend.position = "bottom")+
-    guides(size=guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5))+
-    theme(legend.box.margin = margin(0, 0, 0, 110))
-)
-
-
-
-comb_plot2<-plot_grid(comb_plot+theme(legend.position = "none"),
-            colour_legend,size_legend, ncol=1,rel_heights=c(4, 0.35,0.35))
-
-ggsave("figures/filter_plot.png",comb_plot2,width = 13,height = 30,units = "cm",dpi = 320)
+ggsave("figures/filter_plot.png",comb_plot,width = 13,height = 30,units = "cm",dpi = 320)
 
 
