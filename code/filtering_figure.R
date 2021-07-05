@@ -5,7 +5,6 @@
 
 rm(list = ls())
 
-
 #load packages
 library(tidyverse)
 library(cowplot)
@@ -14,11 +13,9 @@ library(data.table)
 library(grid)
 library(gridExtra)
 
-
-#learning how to use ggparty and party packages
+#load data
 inv_data<-read.csv("data/cleaned_data.csv")
 
-#work out first split
 #first split - outcomes
 inv_data%>%dplyr::group_by(population)%>%dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
 #only include outcomes relating to invasive species abundance, condition, etc
@@ -60,26 +57,8 @@ outcome_results$perc<-(exp(outcome_results$estimate)-1)*100
 outcome_results$lci<-(exp(outcome_results$estimate-(1.96*outcome_results$se))-1)*100
 outcome_results$uci<-(exp(outcome_results$estimate+(1.96*outcome_results$se))-1)*100
 
-#plot result
-outcome_plot<-outcome_results%>%mutate(outcome=fct_relevel(outcome,"Carbon",
-              "Native animals","Native plants","Invasive plants"))%>%
-              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
-              geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
-              theme(axis.line=element_blank(),
-              axis.title.x=element_blank(),axis.ticks = element_blank(),
-              axis.title.y=element_blank(),
-              panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-              panel.grid.minor=element_blank(),plot.background=element_blank())+
-              theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
-              plot.background = element_rect(colour = "black",size = 1))+
-              facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
-              scale_size(range = c(1,6),limits = c(0,165))
-
 
 #second split - species
-
-unique(inv_sub$species)
-
 inv_sub$species_split<-as.factor(ifelse(inv_sub$species=="Spartina","Spartina","Other species"))
 inv_sub%>%dplyr::group_by(species)%>%dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
 
@@ -112,21 +91,6 @@ species_results$perc<-(exp(species_results$estimate)-1)*100
 species_results$lci<-(exp(species_results$estimate-(1.96*species_results$se))-1)*100
 species_results$uci<-(exp(species_results$estimate+(1.96*species_results$se))-1)*100
 
-species_plot<-species_results%>%mutate(outcome=fct_relevel(outcome,
-              rev(c("Spartina","Japanese knotweed",
-              "Parrot's feather","Giant hogweed"))))%>%
-              ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
-              geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
-              theme(axis.line=element_blank(), axis.title.x=element_blank(),axis.ticks = element_blank(),
-              axis.title.y=element_blank(),legend.position="none",
-              panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-              panel.grid.minor=element_blank(),plot.background=element_blank())+
-              theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
-              plot.background = element_rect(colour = "black",size = 1))+
-              facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
-              scale_size(range = c(1,6),limits = c(0,165))
-
-plot_grid(outcome_plot,species_plot,align = "v",ncol=1)
 
 #third split
 spar_sub%>%dplyr::group_by(hli)%>%dplyr::summarise(n_studies=length(unique(citation)))%>%print(n=Inf)
@@ -179,7 +143,6 @@ plot_grid(outcome_plot,species_plot,int_plot,align = "v",ncol=1)
 #fourth split - different types of herbicide
 chem_sub%>%dplyr::group_by(herbicide_type)%>%
   dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
-#only include outcomes relating to cutting
 
 chem_sub$herbicide_type<-ifelse(chem_sub$herbicide_type=="Glyphosate   Roundup","Glyphosate",chem_sub$herbicide_type)
 
@@ -203,89 +166,56 @@ for (i in 1:length(un_herb)){
 
 
 
+combined_results<-rbind(outcome_results,species_results,int_results,herb_results)
 
-herb_plot<-herb_results%>%slice_max(k,n=4)%>%
+
+comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
+  mutate(outcome=as.factor(outcome),split=as.factor(split))%>%
+  mutate(outcome=fct_relevel(outcome,(c("Invasive plants","Native plants","Native animals","Carbon",
+                                        "Spartina","Japanese knotweed","Parrot's feather","Giant hogweed",
+                                        "Physical interventions","Habitat management",
+                                        "Chemical control","Biological control"))),
+        split=fct_relevel(split,c("Different\noutcomes","Different\ninvasives",
+                          "Different\ninterventions","Different\nherbicides")))%>%
   ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=n))+
   geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
   theme(axis.line=element_blank(),
-        axis.title.x=element_blank(),axis.ticks = element_blank(),
+        axis.ticks = element_blank(),
         axis.title.y=element_blank(),
-        panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),plot.background=element_blank())+
+        panel.background=element_blank(),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank())+
   theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
-        plot.background = element_rect(colour = "black",size = 1))+
+        plot.background = element_rect(colour = "black",size = 1),
+        strip.background = element_rect(colour = "black",size = 1))+
   scale_y_discrete(limits=rev)+
-  facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
+  facet_wrap(~split,scales = "free",ncol=1)+
+  xlab("Percentage change in outcome")+
+  scale_colour_gradient(low = "grey",high="dark blue",limits=c(0,4298))+
   scale_size(range = c(1,6),limits = c(0,165))
 
 
-
-comb_plot<-plot_grid(outcome_plot+ theme(legend.position="none"),
-                     species_plot+ theme(legend.position="none"),
-                     int_plot+ theme(legend.position="none"),
-                     herb_plot+ theme(legend.position="none"),
-                     align = "v",ncol = 1)
-
 colour_legend <- get_legend(
-  herb_plot + 
+  comb_plot + 
     theme(legend.position = "bottom")+guides(colour=guide_colorbar(title = "no. of comparisons",
     title.position="top",title.hjust = 0.5,barwidth = 15,))+
     guides(size=FALSE)+
-    theme(legend.box.margin = margin(0, 0, 0, 60))
+    theme(legend.box.margin = margin(0, 0, 0, 110))
 )
 
 size_legend <- get_legend(
-  herb_plot + 
+  comb_plot + 
     guides(color = FALSE) +
     theme(legend.position = "bottom")+
     guides(size=guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5))+
-    theme(legend.box.margin = margin(0, 0, 0, 60))
+    theme(legend.box.margin = margin(0, 0, 0, 110))
 )
 
 
 
-comb_plot2<-plot_grid(comb_plot, colour_legend,size_legend, ncol=1,rel_heights=c(4, 0.3,0.3))
+comb_plot2<-plot_grid(comb_plot+theme(legend.position = "none"),
+            colour_legend,size_legend, ncol=1,rel_heights=c(4, 0.35,0.35))
 
-ggsave("figures/filter_plot.png",comb_plot2,width = 12,height = 30,units = "cm",dpi = 320)
-
-
-
-
-#combine all plots
-comb_plot<-plot_grid(outcome_plot,species_plot,int_plot,herb_plot,align = "v",nrow = 1)
-
-ggsave("figures/filter_plot_new1.png",comb_plot,width = 60,height = 10,units = "cm",dpi = 320)
-
-comb_plot2<-plot_grid(outcome_plot,species_plot,herb_plot,int_plot,align = "hv",nrow = 2)
-
-ggsave("figures/filter_plot_new2.png",comb_plot2,width = 30,height = 20,units = "cm",dpi = 320)
-
-comb_plot3<-plot_grid(outcome_plot,species_plot,herb_plot,int_plot,align = "hv",ncol = 1)
-ggsave("figures/filter_plot_new3.png",comb_plot2,width = 30,height = 20,units = "cm",dpi = 320)
-
-### dummy_data does not exist here yet...
-arrow_plot<-ggplot(dummy_data)+
-  geom_segment(aes(
-  x=0,y=1,
-  xend=1.8,yend=1),
-  lineend = "round",
-  linejoin = "round",
-  size=1,
-  arrow = arrow(length = unit(0.3, "inches")))+
-  geom_text(x=0.8,y=1.3,label="Increasing filtering",size=8)+
-  scale_x_continuous(limits=c(0,2))+
-  scale_y_continuous(limits=c(0.5,1.5))+theme_void()+
-  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
-
-comb_plot2<-plot_grid(NULL,arrow_plot,ncol=2,rel_widths = c(0.2,1))
-
-comb_plot3<-plot_grid(comb_plot2,comb_plot,ncol = 1,rel_heights = c(0.3,1),rel_widths = c(1,1),align = "hv")
+ggsave("figures/filter_plot.png",comb_plot2,width = 13,height = 30,units = "cm",dpi = 320)
 
 
-x.grob <- textGrob("Percentage change in outcome", 
-                   gp=gpar(col="black", fontsize=14))
-
-
-comb_plot4<-grid.arrange(arrangeGrob(comb_plot3, bottom = x.grob))
-
-ggsave("figures/filter_plot.png",comb_plot4,width = 60,height = 12,units = "cm",dpi = 320)
