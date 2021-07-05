@@ -1,4 +1,4 @@
-#script to draw decision-tree style diagram
+#script to draw figure showing filtering process for dynamic meta-analyis
 
 .libPaths("C:/R/Library")
 .Library<-("C:/R/Library")
@@ -16,7 +16,9 @@ library(gridExtra)
 #load data
 inv_data<-read.csv("data/cleaned_data.csv")
 
-#first split - outcomes
+########################
+#first split - outcomes#
+########################
 inv_data%>%dplyr::group_by(population)%>%dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
 #only include outcomes relating to invasive species abundance, condition, etc
 inv_data$population<-ifelse(inv_data$population=="Pathogens, pests, weeds, and invasive species","Invasive plants",inv_data$population)
@@ -27,12 +29,11 @@ inv_data%>%dplyr::group_by(hlo)%>%
   dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
 
 #subset into different groups for different populations
+#1 - Invasive plants, 2 - native plants, 3. animals and 4 - carbon
 inv_sub<-subset(inv_data,population=="Invasive plants")
-
 plant_sub<-subset(inv_data,hlo=="Plant abundance"|hlo=="Plant condition"|hlo=="Plant diversity"|hlo=="Plant fecundity")
 animal_sub<-subset(inv_data,hlo=="Animal abundance"|hlo=="Animal condition"|hlo=="Animal diversity")
 carbon_sub<-subset(inv_data,hlo=="SOil organic carbon"|hlo=="Soil organic matter"|hlo=="Soil microbial biomass")
-soil_sub<-subset(inv_data,population=="Soil")
 
 #run different meta-analysese for each of these subsets
 inv_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
@@ -43,11 +44,9 @@ animal_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                    control=list(maxiter=1000),data=animal_sub)
 carbon_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                    control=list(maxiter=1000),data=carbon_sub)
-
 #put outputs into a dataframe along with details on numbers of studies and comparisons
 outcome_results<-data.frame(split=rep("Different\noutcomes",4),
-                            outcome=c("Invasive plants","Native plants",
-                                      "Native animals","Carbon"),
+                            outcome=c("Invasive plants","Native plants","Native animals","Carbon"),
                             n=c(165,34,14,11),
                             k=c(4298,863,219,90),
            estimate=c(inv_out_m1$beta,plant_out_m1$beta,animal_out_m1$beta,carbon_out_m1$beta),
@@ -57,16 +56,18 @@ outcome_results$perc<-(exp(outcome_results$estimate)-1)*100
 outcome_results$lci<-(exp(outcome_results$estimate-(1.96*outcome_results$se))-1)*100
 outcome_results$uci<-(exp(outcome_results$estimate+(1.96*outcome_results$se))-1)*100
 
-
-#second split - species
+########################
+#second split - species#
+########################
 inv_sub$species_split<-as.factor(ifelse(inv_sub$species=="Spartina","Spartina","Other species"))
 inv_sub%>%dplyr::group_by(species)%>%dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
-
+#subset into different groups for different invasive species
+#1 - Spartina, 2 - Parrot's feather, 3. Japanese knotweed, and 4 - Giant hogweed
 spar_sub<-subset(inv_sub,species=="Spartina")
 pf_sub<-subset(inv_sub,species=="Parrot's feather")
 jk_sub<-subset(inv_sub,species=="Japanese knotweed")
 gh_sub<-subset(inv_sub,species=="Giant hogweed")
-
+#run meta-analyses for each group
 spar_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                    control=list(maxiter=1000),data=spar_sub)
 jk_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
@@ -75,11 +76,7 @@ gh_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
               control=list(maxiter=1000),data=gh_sub)
 pf_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
               control=list(maxiter=1000),data=pf_sub)
-
-
-summary(spar_m1)
-summary(non_spar_m1)
-
+#put outputs into a dataframe along with details on numbers of studies and comparisons
 species_results<-data.frame(split=rep("Different\ninvasives",4),
                             outcome=c("Spartina","Japanese knotweed",
                                       "Parrot's feather","Giant hogweed"),
@@ -91,17 +88,18 @@ species_results$perc<-(exp(species_results$estimate)-1)*100
 species_results$lci<-(exp(species_results$estimate-(1.96*species_results$se))-1)*100
 species_results$uci<-(exp(species_results$estimate+(1.96*species_results$se))-1)*100
 
+#############################################
+#third split - different broad interventions#
+#############################################
 
-#third split
 spar_sub%>%dplyr::group_by(hli)%>%dplyr::summarise(n_studies=length(unique(citation)))%>%print(n=Inf)
-
-
+#subset into different groups for different types of intervention
+#1 - Physical control, 2 - habtiat management, 3. Chemical control, and 4 - Biological control
 phys_sub<-subset(spar_sub,hli=="Physical control")
 hab_sub<-subset(spar_sub,hli=="Habitat management")
 chem_sub<-subset(spar_sub,hli=="Chemical control")
 biol_sub<-subset(spar_sub,hli=="Biological control")
-
-
+#run meta-analyses for each group
 phys_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                 control=list(maxiter=1000),data=phys_sub)
 hab_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
@@ -110,8 +108,7 @@ chem_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                control=list(maxiter=1000),data=chem_sub)
 biol_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                control=list(maxiter=1000),data=biol_sub)
-
-
+#put outputs into a dataframe along with details on numbers of studies and comparisons
 int_results<-data.frame(split=rep("Different\ninterventions",4),
                           outcome=c("Physical interventions","Habitat management",
                          "Chemical control","Biological control"),
@@ -123,29 +120,14 @@ int_results$perc<-(exp(int_results$estimate)-1)*100
 int_results$lci<-(exp(int_results$estimate-(1.96*int_results$se))-1)*100
 int_results$uci<-(exp(int_results$estimate+(1.96*int_results$se))-1)*100
 
-int_plot<-int_results%>%mutate(outcome=fct_relevel(outcome))%>%
-  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,size=n,colour=k))+
-  geom_point()+geom_errorbar(size=0.5)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
-  theme(axis.line=element_blank(),
-        axis.title.x=element_blank(),axis.ticks = element_blank(),
-        axis.title.y=element_blank(),
-        panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),plot.background=element_blank())+
-        theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
-        plot.background = element_rect(colour = "black",size = 1))+
-        facet_wrap(~split)+scale_colour_viridis_b(option = "viridis",limits=c(0,4298))+
-        scale_size(range = c(1,6),limits = c(0,165))
-
-
-plot_grid(outcome_plot,species_plot,int_plot,align = "v",ncol=1)
-
-
-#fourth split - different types of herbicide
+##############################################
+#fourth split - different types of herbicide##
+##############################################
 chem_sub%>%dplyr::group_by(herbicide_type)%>%
   dplyr::summarise(n_studies=length(unique(citation)),k=length(log_response_ratio))%>%print(n=Inf)
-
+#change name of glyphosate from "Glyphosate   Roundup" to "Glyphosate"
 chem_sub$herbicide_type<-ifelse(chem_sub$herbicide_type=="Glyphosate   Roundup","Glyphosate",chem_sub$herbicide_type)
-
+#run meta-analysis for each different type of herbicide and save parameter estimates
 herb_results<-NULL
 un_herb<-unique(chem_sub$herbicide_type)
 for (i in 1:length(un_herb)){
@@ -164,11 +146,12 @@ for (i in 1:length(un_herb)){
   herb_results<-rbind(herb_results,temp_res)
 }
 
-
-
+######################################
+#figure###############################
+######################################
+#combine results for different meta-analyes into one dataframe
 combined_results<-rbind(outcome_results,species_results,int_results,herb_results)
-
-
+#plot results
 comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
   mutate(outcome=as.factor(outcome),split=as.factor(split))%>%
   mutate(outcome=fct_relevel(outcome,(c("Invasive plants","Native plants","Native animals","Carbon",
@@ -178,7 +161,8 @@ comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
         split=fct_relevel(split,c("Different\noutcomes","Different\ninvasives",
                           "Different\ninterventions","Different\nherbicides")))%>%
   ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=n,size=n))+
-  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+
+  theme_cowplot()+geom_vline(xintercept=0,lty=2)+
   theme(axis.line=element_blank(),
         axis.ticks = element_blank(),
         axis.title.y=element_blank(),
@@ -197,8 +181,4 @@ comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
   guides(color= guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5), 
          size=guide_legend(title="no. of studies",title.position="top",title.hjust = 0.5))+
   theme(legend.position = "bottom")
-
-
-ggsave("figures/filter_plot.png",comb_plot,width = 13,height = 30,units = "cm",dpi = 320)
-
-
+ggsave("figures/filter_plot.png",comb_plot,width = 13,height = 30,units = "cm",dpi = 320)#save plot
