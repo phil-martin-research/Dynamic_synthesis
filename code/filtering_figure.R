@@ -251,37 +251,53 @@ sp_species_sp_animals<-partysplit(3L, index = 1:4)
 #different interventions for different invasives - soil
 sp_species_hb_soil<-partysplit(3L, index = 1:2)
 sp_species_sp_soil<-partysplit(3L, index = 1:4)
-
+#different high-level interventions
+sp_int<-partysplit(3L, index = 1:7)
 
 inv_data%>%group_by(new_pop)%>%dplyr::summarise(k=length(log_response_ratio))%>%print(n=Inf)
 inv_data%>%group_by(new_pop,species)%>%dplyr::summarise(k=length(log_response_ratio))%>%print(n=Inf)
 inv_data%>%group_by(new_pop,species,hli)%>%dplyr::summarise(k=length(log_response_ratio))%>%print(n=Inf)
 
 #plot
-pn <- partynode(1L, info=7048,split = sp_pop,kids=list(#split for different populations
+pn <- partynode(1L, split = sp_pop,kids=list(#split for different populations
   partynode(2L,split=sp_species_inv,info = 5027,kids=list(#split for different invasive species
     partynode(3L,split=sp_species_cw,info = 172,kids=list(#split for curly waterweed
-      partynode(4L,info = 172),
-      partynode(4L, info = 1))),
-    partynode(3L,split=sp_species_fp,info = 28,kids=list(#split for floating pennywort
+      partynode(4L,info = 117,),
+      partynode(5L, info = 10),
+      partynode(6L, info = 20),
+      partynode(6L, info = 25))),
+    partynode(2L,split=sp_species_fp,info = 28,kids=list(#split for floating pennywort
       partynode(4L, info = 28),
-      partynode(4L, info = 1))),                                   
-    partynode(3L,split=sp_species_gh ,info = 228,kids=list(#split for giant hogweed
-      partynode(4L, info = 228),
-      partynode(4L, info = 1))),
-    partynode(3L,split=sp_species_hb ,info = 153,kids=list(#split for himlayan balsam
-      partynode(4L, info = 153),
-      partynode(4L, info = 1))),
-    partynode(3L, split=sp_species_jk,info = 584,kids=list(#split for japanese knotweed
-      partynode(4L, info = 584),
-      partynode(4L, info = 1))),
-    partynode(3L, split=sp_species_nw,info = 420,kids=list(#split for Nuttall's waterweed
-      partynode(3L, info = 420),
-      partynode(3L, info = 1))),
-    partynode(3L,split=sp_species_pf, info = 731,kids=list(
-      partynode(3L, info = 731),
-      partynode(3L, info = 1))),
-    partynode(10L, split=sp_species_sp,info = 2711,kids=list(
+      partynode(5L, info = 1))),                                   
+    partynode(2L,split=sp_species_gh ,info = 228,kids=list(#split for giant hogweed
+      partynode(4L, info = 6),
+      partynode(5L, info = 76),
+      partynode(6L, info = 8),
+      partynode(6L, info = 84),
+      partynode(6L, info = 54))),
+    partynode(2L,split=sp_species_hb ,info = 153,kids=list(#split for himlayan balsam
+      partynode(7L, info = 24),
+      partynode(8L, info = 6),
+      partynode(9L, info = 123))),
+    partynode(2L, split=sp_species_jk,info = 584,kids=list(#split for japanese knotweed
+      partynode(3L, info = 27),
+      partynode(3L, info = 310),
+      partynode(3L, info = 40),
+      partynode(3L, info = 104),
+      partynode(3L, info = 29),
+      partynode(3L, info = 2),
+      partynode(3L, info = 72))),
+    partynode(8L, split=sp_species_nw,info = 420,kids=list(#split for Nuttall's waterweed
+      partynode(3L, info = 38),
+      partynode(3L, info = 140),
+      partynode(3L, info = 108),
+      partynode(3L, info = 134))),
+    partynode(9L,split=sp_species_pf, info = 731,kids=list(#split for PArrot's feather
+      partynode(3L, info = 8),
+      partynode(3L, info = 654),
+      partynode(3L, info = 16),
+      partynode(3L, info = 53))),
+    partynode(10L, split=sp_species_sp,info = 2711,kids=list(#Split for Spartina
       partynode(3L, info = 33),
       partynode(3L, info = 285),
       partynode(3L, info = 599),
@@ -298,8 +314,10 @@ pn <- partynode(1L, info=7048,split = sp_pop,kids=list(#split for different popu
       partynode(4L, info = 363),
       partynode(4L, info = 0))),
     partynode(3L, split=sp_species_jk_native,info = 84,kids=list(#split for japanese knotweed
-      partynode(4L, info = 84),
-      partynode(4L, info = 1))),
+      partynode(4L, info = 2),
+      partynode(4L, info = 18),
+      partynode(4L, info = 14),
+      partynode(4L, info = 50))),
     partynode(3L, split=sp_species_nw_native,info = 70,kids=list(#split for nuttall's waterweed
       partynode(4L, info = 70),
       partynode(4L, info = 1))),
@@ -307,8 +325,10 @@ pn <- partynode(1L, info=7048,split = sp_pop,kids=list(#split for different popu
       partynode(4L, info = 9),
       partynode(4L, info = 106))),
     partynode(3L, split=sp_species_sp_native,info = 118,kids=list(#split for spartina
-      partynode(4L, info = 118),
-      partynode(4L, info = 1))))),
+      partynode(4L, info = 26),
+      partynode(4L, info = 53),
+      partynode(4L, info = 4),
+      partynode(4L, info = 35))))),
   partynode(2L,split=sp_species_animals,info = 228,kids=list(#split for animal biodiversity
     partynode(3L,split=sp_species_cw_animals, info = 9,kids=list(#split for 
       partynode(4L, info = 9),
@@ -336,62 +356,23 @@ pn <- partynode(1L, info=7048,split = sp_pop,kids=list(#split for different popu
     partynode(4L, info = 10)))
 ))
 
+split_names<-c("No","Yes",rep("No",36),"Yes",rep("No",4),"Yes","Yes2",rep("No",6),"Yes2","Yes2",rep("No",42))
 
-
-#simpler version
-pn <- partynode(1L,split = sp_pop,kids=list(#split for different populations
-  partynode(2L,split=sp_species_inv,info = 5027,kids=list(#split for different invasive species
-    partynode(3L,info = 172),
-    partynode(3L,info = 28),                                   
-    partynode(3L,info = 228),
-    partynode(3L,info = 153),
-    partynode(3L,info = 584),
-    partynode(3L,info = 420),
-    partynode(3L,info = 731),
-    partynode(10L, split=sp_species_sp,info = 2711,kids=list(
-      partynode(3L, info = 33),
-      partynode(3L, info = 285),
-      partynode(3L, info = 599),
-      partynode(3L, info = 275),
-      partynode(3L, info = 1519))))),
-  partynode(2L,split=sp_species_plants,info = 993,kids=list(#split for native plant species
-    partynode(3L, info = 72),
-    partynode(3L, info = 171),
-    partynode(3L, split=sp_species_hb_native,info = 363,kids=list(#split for himalayan balsam
-      partynode(4L, info = 363),
-      partynode(4L, info = 0))),
-    partynode(3L, info = 84),
-    partynode(3L, info = 70),
-    partynode(3L, info = 115),
-    partynode(3L, info = 118))),
-  partynode(2L,split=sp_species_animals,info = 228,kids=list(#split for animal biodiversity
-    partynode(3L,info = 9),
-    partynode(3L,info = 40),
-    partynode(3L, info = 179))),
-  partynode(2L,split=sp_species_soil,info = 761,kids=list(#split for soil
-    partynode(3L, info = 314),
-    partynode(3L, info = 447))),
-  partynode(2L,split=sp_species_water,info = 39,kids=list(#split for water
-    partynode(3L, info = 2),
-    partynode(4L, info = 27),
-    partynode(4L, info = 10)))
-))
-split_names<-c("No","Yes",rep("No",7),"Yes",rep("No",4),"Yes","Yes2",rep("No",2),"Yes2","Yes2",rep("No",16))
 py <- party(pn, inv_data_split,names=split_names)
 
-meta_tree<-ggparty(py) +
-  geom_edge(aes(size=info,colour=split_names))+
-  scale_size(range = c(0.1,2))+
+meta_tree<-ggparty(py)+
+  geom_edge(aes(colour=split_names,size=info))+
+  scale_size(range = c(0.2,1))+
   theme(legend.position = "none")+
-  geom_node_label(aes(label=info),ids="inner",label.r=unit(0, "lines"))+
-  scale_color_manual(values=c("grey50","#9494F6","#EFBD92"))+
+  scale_color_manual(values=c("grey80","#9494F6","#EFBD92"))+
   theme(plot.margin = unit(c(0.5, 0.5, 0.5, 2), "cm"),
         text = element_text(size = 8))
-ggsave("figures/decision_tree.png",width = 30,height=20,dpi=300,units="cm")
+ggsave("figures/decision_tree.png",width = 30,height=25,dpi=300,units="cm")
 
 
-plot_grid(meta_tree,comb_plot+theme(legend.position = "none"),labels=c("(a)","(b)"),rel_widths = c(0.7,1),nrow=1)
-ggsave("figures/combined_figure_horizonal.png",width = 22,height=12,dpi=300,units="cm")
+tree_grid<-plot_grid(meta_tree,NULL,rel_heights = c(1,0.1),ncol=1)
+plot_grid(tree_grid,comb_plot+theme(legend.position = "none"),labels=c("(a)","(b)"),rel_widths = c(1,1),nrow=1)
+ggsave("figures/combined_figure_horizonal.png",width = 27,height=15,dpi=300,units="cm")
 
 plot_grid(meta_tree,comb_plot+theme(legend.position = "none"),labels=c("(a)","(b)"),rel_heights = c(0.7,1),nrow=2,ncol=1)
 ggsave("figures/combined_figure_vertical.png",width = 15,height=20,dpi=300,units="cm")
