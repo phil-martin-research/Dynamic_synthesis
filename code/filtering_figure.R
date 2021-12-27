@@ -1,8 +1,5 @@
 #script to draw figure showing filtering process for dynamic meta-analyis
 
-.libPaths("C:/R/Library")
-.Library<-("C:/R/Library")
-
 rm(list = ls())
 
 #load packages
@@ -149,7 +146,7 @@ for (i in 1:length(un_herb)){
 ######################################
 #figure###############################
 ######################################
-#combine results for different meta-analyes into one dataframe
+#combine results for different meta-analyses into one dataframe
 combined_results<-rbind(outcome_results,species_results,int_results,herb_results)
 #plot results
 comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
@@ -370,7 +367,7 @@ meta_tree<-ggparty(py)+
 ggsave("figures/decision_tree.png",width = 30,height=25,dpi=300,units="cm")
 
 
-tree_grid<-plot_grid(meta_tree,NULL,rel_heights = c(1,0.1),ncol=1)
+tree_grid<-plot_grid(meta_tree,NULL,rel_heights = c(1,0.3),ncol=1)
 plot_grid(tree_grid,comb_plot+theme(legend.position = "none"),labels=c("(a)","(b)"),rel_widths = c(1,1),nrow=1)
 ggsave("figures/combined_figure_horizonal.png",width = 27,height=15,dpi=300,units="cm")
 
