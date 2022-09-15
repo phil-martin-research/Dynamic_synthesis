@@ -32,7 +32,7 @@ plant_sub<-subset(inv_data,hlo=="Plant abundance"|hlo=="Plant condition"|hlo=="P
 animal_sub<-subset(inv_data,hlo=="Animal abundance"|hlo=="Animal condition"|hlo=="Animal diversity")
 carbon_sub<-subset(inv_data,hlo=="SOil organic carbon"|hlo=="Soil organic matter"|hlo=="Soil microbial biomass")
 
-#run different meta-analysese for each of these subsets
+#run different meta-analyses for each of these subsets
 inv_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
        control=list(maxiter=1000),data=inv_sub)
 plant_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
@@ -42,8 +42,8 @@ animal_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
 carbon_out_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                    control=list(maxiter=1000),data=carbon_sub)
 #put outputs into a dataframe along with details on numbers of studies and comparisons
-outcome_results<-data.frame(split=rep("Different\noutcomes",4),
-                            outcome=c("Invasive plants","Native plants","Native animals","Carbon"),
+outcome_results<-data.frame(split=rep("Different outcomes",4),
+                            outcome=c("Invasive\nplants","Native\nplants","Native\nanimals","Carbon"),
                             n=c(165,34,14,11),
                             k=c(4298,863,219,90),
            estimate=c(inv_out_m1$beta,plant_out_m1$beta,animal_out_m1$beta,carbon_out_m1$beta),
@@ -74,9 +74,9 @@ gh_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
 pf_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
               control=list(maxiter=1000),data=pf_sub)
 #put outputs into a dataframe along with details on numbers of studies and comparisons
-species_results<-data.frame(split=rep("Different\ninvasives",4),
-                            outcome=c("Spartina","Japanese knotweed",
-                                      "Parrot's feather","Giant hogweed"),
+species_results<-data.frame(split=rep("Different invasives",4),
+                            outcome=c("Spartina","Japanese\nknotweed",
+                                      "Parrot's\nfeather","Giant\nhogweed"),
                             k=c(2386,484,508,199),
                             n=c(89,30,17,9),
                             estimate=c(spar_m1$beta,jk_m1$beta,gh_m1$beta,pf_m1$beta),
@@ -106,9 +106,9 @@ chem_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
 biol_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                control=list(maxiter=1000),data=biol_sub)
 #put outputs into a dataframe along with details on numbers of studies and comparisons
-int_results<-data.frame(split=rep("Different\ninterventions",4),
-                          outcome=c("Physical interventions","Habitat management",
-                         "Chemical control","Biological control"),
+int_results<-data.frame(split=rep("Different interventions",4),
+                          outcome=c("Physical\ninterventions","Habitat\nmanagement",
+                         "Chemical\ncontrol","Biological\ncontrol"),
                           k=c(1353,578,259,33),
                           n=c(46,30,17,7),
                           estimate=c(phys_m1$beta,hab_m1$beta,chem_m1$beta,biol_m1$beta),
@@ -116,6 +116,7 @@ int_results<-data.frame(split=rep("Different\ninterventions",4),
 int_results$perc<-(exp(int_results$estimate)-1)*100
 int_results$lci<-(exp(int_results$estimate-(1.96*int_results$se))-1)*100
 int_results$uci<-(exp(int_results$estimate+(1.96*int_results$se))-1)*100
+
 
 ##############################################
 #fourth split - different types of herbicide##
@@ -132,7 +133,7 @@ for (i in 1:length(un_herb)){
   temp_n<-length(unique(sub_temp$study))
   temp_m1<-rma.mv(log_response_ratio,selected_v,random=list(~1|study),
                   control=list(maxiter=1000),data=sub_temp)
-  temp_res<-data.frame(split=("Different\nherbicides"),
+  temp_res<-data.frame(split=("Different herbicides"),
             outcome=un_herb[i],
             estimate=c(temp_m1$beta),
             se=c(temp_m1$se),
@@ -143,25 +144,63 @@ for (i in 1:length(un_herb)){
   herb_results<-rbind(herb_results,temp_res)
 }
 
+herb_results$outcome<-c("Glyphosate","Vinegar","Monodosium\nmethanearsonate",
+                        "Dalapon","Atrazine","Imazapyr","Fluazifop\np butyl",
+                        "Haloxyfop r\nmethyl","Cyhalofop\nbutyl","Haloxyfop p\nmethyl",
+                        "Imazameth")
+
 ######################################
 #figure###############################
 ######################################
 #combine results for different meta-analyses into one dataframe
 combined_results<-rbind(outcome_results,species_results,int_results,herb_results)
 #plot results
+
+combined_results$outcome
 comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
   mutate(outcome=as.factor(outcome),split=as.factor(split))%>%
-  mutate(outcome=fct_relevel(outcome,(c("Invasive plants","Native plants","Native animals","Carbon",
-                                        "Spartina","Japanese knotweed","Parrot's feather","Giant hogweed",
-                                        "Physical interventions","Habitat management",
-                                        "Chemical control","Biological control"))),
-        split=fct_relevel(split,c("Different\noutcomes","Different\ninvasives",
-                          "Different\ninterventions","Different\nherbicides")))%>%
+  mutate(outcome=fct_relevel(outcome,(c("Invasive\nplants","Native\nplants","Native\nanimals","Carbon",
+                                        "Spartina","Japanese\nknotweed","Parrot's\nfeather","Giant\nhogweed",
+                                         "Physical\ninterventions","Chemical\ncontrol",
+                                          "Biological\ncontrol","Habitat\nmanagement"))),
+        split=fct_relevel(split,c("Different outcomes","Different invasives",
+                                  "Different herbicides","Different interventions")))%>%
   ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=k))+
   geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+
   theme_cowplot()+geom_vline(xintercept=0,lty=2)+
   scale_y_discrete(limits=rev,position = "right")+
-  facet_wrap(~split,scales = "free_y",ncol=1)+
+  facet_wrap(~split,scales = "free",ncol=2)+
+  xlab("Percentage change in outcome")+
+  #scale_x_continuous(breaks = c(-75,-50,-25,0,25))+
+  scale_size_continuous(range=c(1, 4), breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  scale_colour_continuous(low="grey90",high="blue3",breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  guides(color= guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5), 
+         size=guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5))+
+  theme(legend.position = "bottom")+
+  theme(axis.line=element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y=element_blank(),
+        panel.background=element_blank(),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank())+
+  theme(plot.margin = unit(c(0.5, 0.5, 0.5, 4), "cm"),
+        strip.background = element_rect(colour = "black",size = 1,fill="#9494F6"),
+        panel.border = element_rect(colour = "black",size = 1),
+        text = element_text(size = 16),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14))+
+  theme(panel.spacing = unit(15, "lines"))
+ggsave("figures/new_horizontal_plot.png",comb_plot,width = 30,height = 25,units = "cm",dpi = 320)#save plot
+
+
+
+#different version of plot
+
+outcome_figure<-outcome_results%>%
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=k))+
+  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+
+  theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  scale_y_discrete(limits=rev,position = "right")+
   xlab("Percentage change in outcome")+
   scale_x_continuous(breaks = c(-75,-50,-25,0,25))+
   scale_size_continuous(range=c(1, 4), breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
@@ -182,9 +221,127 @@ comb_plot<-combined_results%>%group_by(split)%>%slice_max(k,n=4)%>%
         panel.border = element_rect(colour = "black",size = 1),
         text = element_text(size = 10),
         axis.text = element_text(size = 10),
-        axis.title = element_text(size = 10))
-ggsave("figures/filter_plot.png",comb_plot,width = 20,height = 30,units = "cm",dpi = 320)#save plot
+        axis.title = element_text(size = 10))+
+  facet_wrap(~split)+
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
+  
+species_figure<-species_results%>%
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=k))+
+  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+
+  theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  scale_y_discrete(limits=rev,position = "right")+
+  xlab("Percentage change in outcome")+
+  scale_x_continuous(breaks = c(-75,-50,-25,0,25))+
+  scale_size_continuous(range=c(1, 4), breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  scale_colour_continuous(low="grey90",high="blue3",breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  guides(color= guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5), 
+         size=guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5))+
+  theme(legend.position = "right",
+        legend.margin=margin(c(5,5,5,5)),
+        legend.box.margin=margin(-50,-10,-30,-30))+
+  theme(axis.line=element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y=element_blank(),
+        panel.background=element_blank(),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank())+
+  theme(plot.margin = unit(c(0.5, 0.5, 0.5, 4), "cm"),
+        strip.background = element_rect(colour = "black",size = 1,fill="#9494F6"),
+        panel.border = element_rect(colour = "black",size = 1),
+        text = element_text(size = 10),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10))+
+  facet_wrap(~split)+
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
 
+
+int_figure<-int_results%>%
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=k))+
+  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+
+  theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  scale_y_discrete(limits=rev,position = "right")+
+  xlab("Percentage change in outcome")+
+  scale_x_continuous(breaks = c(-75,-50,-25,0,25))+
+  scale_size_continuous(range=c(1, 4), breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  scale_colour_continuous(low="grey90",high="blue3",breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  guides(color= guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5), 
+         size=guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5))+
+  theme(legend.position = "right",
+        legend.margin=margin(c(5,5,5,5)),
+        legend.box.margin=margin(-50,-10,-30,-30))+
+  theme(axis.line=element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y=element_blank(),
+        panel.background=element_blank(),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank())+
+  theme(plot.margin = unit(c(0.5, 0.5, 0.5, 4), "cm"),
+        strip.background = element_rect(colour = "black",size = 1,fill="#9494F6"),
+        panel.border = element_rect(colour = "black",size = 1),
+        text = element_text(size = 10),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10))+
+  facet_wrap(~split)+
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
+
+herb_figure<-herb_results%>%slice_max(k,n=4)%>%
+  ggplot(aes(x=perc,xmin=lci,xmax=uci,y=outcome,colour=k,size=k))+
+  geom_point()+geom_errorbar(size=0.5)+geom_point(shape=1,colour="black",stroke=1)+
+  theme_cowplot()+geom_vline(xintercept=0,lty=2)+
+  scale_y_discrete(limits=rev,position = "right")+
+  xlab("Percentage change in outcome")+
+  scale_x_continuous(breaks = c(-75,-50,-25,0,25))+
+  scale_size_continuous(range=c(1, 4), breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  scale_colour_continuous(low="grey90",high="blue3",breaks=c(5,15,78,496,4298),limits=c(1,5000),trans="sqrt")+
+  guides(color= guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5), 
+         size=guide_legend(title="no. of comparisons",title.position="top",title.hjust = 0.5))+
+  theme(legend.position = "right",
+        legend.margin=margin(c(5,5,5,5)),
+        legend.box.margin=margin(-50,-10,-30,-30))+
+  theme(axis.line=element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y=element_blank(),
+        panel.background=element_blank(),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank())+
+  theme(plot.margin = unit(c(0.5, 0.5, 0.5, 4), "cm"),
+        strip.background = element_rect(colour = "black",size = 1,fill="#9494F6"),
+        panel.border = element_rect(colour = "black",size = 1),
+        text = element_text(size = 10),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10))+
+  facet_wrap(~split)+
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
+
+blank_plot<-ggplot()+theme_void()++
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
+
+plot_grid(outcome_figure+theme(legend.position="none"),
+          blank_plot,
+          blank_plot,
+          blank_plot,
+          blank_plot,
+          species_figure+theme(legend.position="none"),
+          blank_plot,
+          blank_plot,
+          blank_plot,
+          blank_plot,
+          int_figure+theme(legend.position="none"),
+          blank_plot,blank_plot,blank_plot,blank_plot,
+          herb_figure+theme(legend.position="none"),
+          nrow = 4,ncol=4,align = "hv",axis = "tblr")
+
+ggsave("figures/new_horizontal_figure.pdf",width = 40,height=15,dpi=300,units="cm")
+ggsave("figures/new_horizontal_figure.png",width = 40,height=15,dpi=300,units="cm")
+
+
+plot_grid(outcome_figure+theme(legend.position="none"),
+          species_figure+theme(legend.position="none"),
+          int_figure+theme(legend.position="none"),
+          herb_figure+theme(legend.position="none"),
+          nrow = 1,ncol=4,align = "hv",axis = "tblr")
+
+ggsave("figures/new_horizontal_figure.png",width = 40,height=8,dpi=300,units="cm")
 
 ############################
 #tree part of figure########
